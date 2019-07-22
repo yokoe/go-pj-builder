@@ -54,6 +54,7 @@ func createNewProject(name string) error {
 
 	// find directories
 	dirsWithAppName := []string{}
+	readmeFiles := []string{}
 	if err := filepath.Walk(workDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -61,6 +62,11 @@ func createNewProject(name string) error {
 		if info.IsDir() {
 			if strings.HasSuffix(path, "_your_app_") {
 				dirsWithAppName = append(dirsWithAppName, path)
+			}
+		} else {
+			_, filename := filepath.Split(path)
+			if filename == "README.md" {
+				readmeFiles = append(readmeFiles, path)
 			}
 		}
 
@@ -72,6 +78,12 @@ func createNewProject(name string) error {
 	for _, path := range dirsWithAppName {
 		if err := os.Rename(path, strings.ReplaceAll(path, "_your_app_", name)); err != nil {
 			return xerrors.Errorf("failed to rename directory with appname: %w", err)
+		}
+	}
+
+	for _, path := range readmeFiles {
+		if err := os.Remove(path); err != nil {
+			return xerrors.Errorf("failed to remove README.md: %w", err)
 		}
 	}
 
